@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -14,7 +15,7 @@ PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "filter.txt"
 
 def get_filter_llm() -> ChatAnthropic:
     return ChatAnthropic(
-        model="claude-haiku-4-5-20241022",
+        model="claude-haiku-4-5-20251001",
         api_key=settings.anthropic_api_key,
         max_tokens=300,
         temperature=0,
@@ -44,7 +45,8 @@ def filter_item(item: dict) -> FilterResult:
     ])
 
     try:
-        data = json.loads(response.content)
+        raw = re.sub(r"```(?:json)?\s*([\s\S]*?)```", r"\1", response.content).strip()
+        data = json.loads(raw)
         return FilterResult(**data)
     except (json.JSONDecodeError, Exception) as e:
         # Graceful fallback: assign low scores so item doesn't get lost

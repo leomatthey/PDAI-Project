@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -54,7 +55,12 @@ def critique(
     ])
 
     try:
-        data = json.loads(response.content)
+        raw = re.sub(r"```(?:json)?\s*([\s\S]*?)```", r"\1", response.content).strip()
+        # Llama often puts text before the JSON — find the first {
+        brace = raw.find("{")
+        if brace > 0:
+            raw = raw[brace:]
+        data = json.loads(raw)
         scores = CriticScores(**data["scores"])
         return CriticResult(
             scores=scores,
