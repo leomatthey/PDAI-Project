@@ -21,6 +21,7 @@ Write a concise weekly briefing covering the period {period_start} to {period_en
 - Cite sources inline where you reference specific facts or claims, formatted as: [Title](URL). Do not batch citations at section ends — the critic needs to trace each claim to its source.
 - Keep total length under 1500 words.
 - Use Markdown formatting.
+- Write in prose paragraphs for Key Developments, Industry Moves, and Trend Signals — do not reduce these sections to bullet-point lists. Bullet points are fine for TL;DR and What to Watch, but analysis sections should read like a briefing document with full sentences, context, and narrative flow.
 
 ## Source Items
 

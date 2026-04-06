@@ -25,7 +25,8 @@ Write a deep analysis covering the period {period_start} to {period_end}.
 - Distinguish between signal and noise explicitly.
 - Include specific metrics, benchmarks, and comparisons where available.
 - Target length: 3000-5000 words.
-- Use Markdown formatting with clear headers and bullet points.
+- Use Markdown formatting with clear headers.
+- Write in prose paragraphs for all analysis sections (Key Themes, Research Frontier, Industry Landscape, Trend Analysis, Strategic Outlook). Bullet points are fine for the Executive Summary and brief lists, but the body of the report should read like a professional analyst document with full sentences, context, and narrative flow.
 
 ## Source Items
 
