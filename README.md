@@ -28,33 +28,7 @@ Reports are viewable on the dashboard, exportable as styled HTML or Quarto docum
 
 ## Architecture
 
-```
-Browser (Dashboard)
-       |
-       v
-  nginx (:80) --- static files + API proxy
-       |
-       v
-  FastAPI (:8000)
-       |
-       |--- Ingestion: arXiv, Semantic Scholar, RSS (10 feeds), GitHub
-       |       |
-       |       v
-       |--- Filter Agent (Claude Haiku 4.5) --> relevance & novelty scores
-       |       |
-       |       v
-       |--- Signal Detection (Claude Haiku 4.5) --> trend patterns
-       |       |
-       |       v
-       +--- Report Pipeline (LangGraph StateGraph)
-               |
-               |--- Synthesis Agent (Claude Sonnet 4.5) --> writes draft
-               |--- Critic Agent (Groq Llama 3.3 70B) --> adversarial review
-               +--- Loop: revise if score < 7/10 (max 2 retries)
-                       |
-                       v
-                 PostgreSQL + pgvector
-```
+![System Architecture](architecture.png)
 
 ---
 
