@@ -174,6 +174,36 @@ def get_signals():
     return db.get_active_signals()
 
 
+@app.get("/signals/{signal_id}/items")
+def get_signal_items(signal_id: int, mode: str = "evidence", limit: int = 10):
+    """Get items related to a signal. mode=evidence uses stored IDs, mode=semantic uses embedding search."""
+    signal = db.get_signal_by_id(signal_id)
+    if not signal:
+        raise HTTPException(status_code=404, detail="Signal not found")
+
+    if mode == "semantic":
+        query_text = f"{signal['topic']} {signal['description']}"
+        embedding = compute_embedding(query_text)
+        items = db.search_items_by_embedding(embedding, limit=limit)
+    else:
+        items = db.get_items_by_ids(signal.get("evidence_ids") or [])
+
+    return {"signal": signal, "mode": mode, "items": items}
+
+
+# ─── Semantic Search ────────────────────────────────────────
+
+@app.get("/items/search")
+def search_items(q: str, limit: int = 10):
+    """Semantic search over ingested items using pgvector cosine similarity."""
+    if not q.strip():
+        raise HTTPException(status_code=400, detail="Query parameter 'q' cannot be empty")
+
+    embedding = compute_embedding(q)
+    items = db.search_items_by_embedding(embedding, limit=limit)
+    return {"query": q, "results": items}
+
+
 # ─── Report Generation ───────────────────────────────────
 
 @app.post("/reports/generate", response_model=ReportResponse)

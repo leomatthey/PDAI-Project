@@ -197,6 +197,51 @@ def get_active_signals() -> list[dict]:
         return [dict(row) for row in cur.fetchall()]
 
 
+def search_items_by_embedding(query_embedding: list[float], limit: int = 10) -> list[dict]:
+    """Find items most similar to the query embedding using pgvector cosine distance."""
+    import numpy as np
+    vec = np.array(query_embedding, dtype=np.float32)
+    sql = """
+        SELECT id, source, title, summary, url, relevance_score, novelty_score, topics, published_at
+        FROM items
+        WHERE relevance_score IS NOT NULL AND embedding IS NOT NULL
+        ORDER BY embedding <=> %s
+        LIMIT %s
+    """
+    with get_connection() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(sql, (vec, limit))
+        return [dict(row) for row in cur.fetchall()]
+
+
+def get_items_by_ids(item_ids: list[int]) -> list[dict]:
+    """Fetch items by a list of IDs."""
+    if not item_ids:
+        return []
+    sql = """
+        SELECT id, source, title, summary, url, relevance_score, novelty_score, topics, published_at
+        FROM items
+        WHERE id = ANY(%s)
+        ORDER BY relevance_score DESC
+    """
+    with get_connection() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(sql, (item_ids,))
+        return [dict(row) for row in cur.fetchall()]
+
+
+def get_signal_by_id(signal_id: int) -> dict | None:
+    """Fetch a single signal by ID."""
+    sql = """
+        SELECT id, signal_type, topic, description, strength, evidence_ids,
+               first_seen, last_updated
+        FROM signals
+        WHERE id = %s
+    """
+    with get_connection() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(sql, (signal_id,))
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
 def get_item_count() -> int:
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute("SELECT count(*) FROM items")

@@ -691,6 +691,179 @@
         .strength-bar-fill.mid  { background: linear-gradient(90deg, var(--yellow), #fcd34d); box-shadow: 0 0 8px rgba(245,158,11,0.4); }
         .strength-bar-fill.low  { background: linear-gradient(90deg, var(--accent), var(--accent-2)); box-shadow: 0 0 8px rgba(139,92,246,0.4); }
 
+        /* ─── Search Bar ─────────────────────────────────── */
+        .search-bar {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeUp 0.5s ease 0.22s forwards;
+        }
+
+        .search-bar svg { width: 18px; height: 18px; color: var(--text-muted); flex-shrink: 0; }
+
+        .search-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        .search-input::placeholder { color: var(--text-muted); }
+
+        .search-results {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .search-results.visible { display: block; }
+
+        .search-result-item {
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: var(--glass-hover); }
+
+        .search-result-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-result-summary {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .search-result-meta {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.3rem;
+            align-items: center;
+        }
+
+        .search-badge {
+            font-size: 0.62rem;
+            font-weight: 600;
+            padding: 0.12rem 0.4rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-secondary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .search-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding: 0.5rem 1.25rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        /* ─── Signal Items (expandable) ──────────────────── */
+        .signal-card { cursor: pointer; }
+
+        .signal-items {
+            display: none;
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .signal-card.expanded .signal-items { display: block; }
+        .signal-card.expanded { border-color: var(--glass-border-hover); background: rgba(255,255,255,0.04); }
+
+        .signal-item {
+            padding: 0.45rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .signal-item:last-child { border-bottom: none; }
+
+        .signal-item-title {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.15rem;
+        }
+
+        .signal-item-title a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        .signal-item-title a:hover { color: var(--accent-light); }
+
+        .signal-item-summary {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .signal-mode-toggle {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .signal-mode-btn {
+            font-size: 0.62rem;
+            font-weight: 600;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            border: 1px solid var(--glass-border);
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all var(--transition);
+        }
+
+        .signal-mode-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .signal-loading {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            padding: 0.4rem 0;
+        }
+
         /* ─── Empty State ────────────────────────────────── */
         .empty-state {
             text-align: center;
@@ -1881,6 +2054,14 @@
             <button class="btn btn-secondary" id="btn-monthly" onclick="generateReport('monthly', this)"><span class="btn-label">Monthly Report</span><span class="btn-spinner"></span></button>
         </section>
 
+        <!-- Search -->
+        <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" type="text" id="search-input" placeholder="Semantic search across all items..." onkeydown="if(event.key==='Enter')runSearch()">
+            <button class="btn btn-secondary" style="padding:0.35rem 0.75rem;font-size:0.78rem" onclick="runSearch()">Search</button>
+        </div>
+        <div class="search-results" id="search-results"></div>
+
         <!-- Two-column content -->
         <div class="content-grid">
             <!-- Left: Reports -->
@@ -2519,7 +2700,7 @@
                 const typeClass = (s.signal_type || 'emergence').toLowerCase();
 
                 return `
-                    <div class="signal-card" style="animation: fadeUp 0.35s ease ${i * 0.06}s both">
+                    <div class="signal-card" id="signal-${s.id}" onclick="toggleSignalItems(${s.id})" style="animation: fadeUp 0.35s ease ${i * 0.06}s both">
                         <div class="signal-card-header">
                             <span class="signal-topic">${esc(s.topic)}</span>
                             <span class="signal-type ${typeClass}">${s.signal_type || 'signal'}</span>
@@ -2528,6 +2709,7 @@
                         <div class="strength-bar-bg">
                             <div class="strength-bar-fill ${barClass}" style="width:${strength * 100}%"></div>
                         </div>
+                        <div class="signal-items" id="signal-items-${s.id}"></div>
                     </div>
                 `;
             }).join('');
@@ -2726,6 +2908,134 @@
 
         function capitalize(s) {
             return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        // ─── Semantic Search ────────────────────────────
+
+        async function runSearch() {
+            const q = document.getElementById('search-input').value.trim();
+            if (!q) return;
+
+            const container = document.getElementById('search-results');
+            container.classList.add('visible');
+            container.innerHTML = '<div class="search-count">Searching...</div>';
+
+            try {
+                const res = await fetch(`${API}/items/search?q=${encodeURIComponent(q)}&limit=10`);
+                const data = await res.json();
+                const items = data.results || [];
+
+                if (!items.length) {
+                    container.innerHTML = '<div class="search-count">No results found</div>';
+                    return;
+                }
+
+                container.innerHTML = `<div class="search-count">${items.length} results for "${esc(q)}"</div>` +
+                    items.map(item => `
+                        <div class="search-result-item" onclick="window.open('${esc(item.url || '#')}', '_blank')">
+                            <div class="search-result-title">
+                                ${esc(item.title)}
+                            </div>
+                            <div class="search-result-summary">${esc(item.summary || '')}</div>
+                            <div class="search-result-meta">
+                                <span class="search-badge">${esc(item.source || '?')}</span>
+                                ${item.relevance_score != null ? `<span class="search-badge" style="background:var(--green-bg);color:var(--green);border-color:var(--green-border)">rel ${item.relevance_score.toFixed(2)}</span>` : ''}
+                                ${(item.topics || []).slice(0, 3).map(t => `<span class="search-badge">${esc(t)}</span>`).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="search-count">Search failed — is the API running?</div>';
+            }
+        }
+
+        document.getElementById('search-input').addEventListener('focus', () => {
+            const container = document.getElementById('search-results');
+            if (container.innerHTML) container.classList.add('visible');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-bar') && !e.target.closest('.search-results')) {
+                document.getElementById('search-results').classList.remove('visible');
+            }
+        });
+
+        // ─── Signal Items (click to expand) ─────────────
+
+        const signalItemsCache = {};
+
+        async function toggleSignalItems(signalId) {
+            const card = document.getElementById(`signal-${signalId}`);
+            const container = document.getElementById(`signal-items-${signalId}`);
+
+            if (card.classList.contains('expanded')) {
+                card.classList.remove('expanded');
+                return;
+            }
+
+            // Collapse others
+            document.querySelectorAll('.signal-card.expanded').forEach(el => el.classList.remove('expanded'));
+            card.classList.add('expanded');
+
+            const currentMode = container.dataset.mode || 'semantic';
+
+            if (signalItemsCache[`${signalId}-${currentMode}`]) {
+                renderSignalItems(container, signalItemsCache[`${signalId}-${currentMode}`], signalId, currentMode);
+                return;
+            }
+
+            container.innerHTML = '<div class="signal-loading">Loading related items...</div>';
+
+            try {
+                const res = await fetch(`${API}/signals/${signalId}/items?mode=${currentMode}&limit=8`);
+                const data = await res.json();
+                signalItemsCache[`${signalId}-${currentMode}`] = data.items || [];
+                renderSignalItems(container, data.items || [], signalId, currentMode);
+            } catch (e) {
+                container.innerHTML = '<div class="signal-loading">Failed to load items</div>';
+            }
+        }
+
+        function renderSignalItems(container, items, signalId, mode) {
+            const modeToggle = `
+                <div class="signal-mode-toggle">
+                    <button class="signal-mode-btn ${mode === 'semantic' ? 'active' : ''}" onclick="event.stopPropagation(); switchSignalMode(${signalId}, 'semantic')">Semantic</button>
+                    <button class="signal-mode-btn ${mode === 'evidence' ? 'active' : ''}" onclick="event.stopPropagation(); switchSignalMode(${signalId}, 'evidence')">Evidence</button>
+                </div>`;
+
+            if (!items.length) {
+                container.innerHTML = modeToggle + '<div class="signal-loading">No related items found</div>';
+                return;
+            }
+
+            container.innerHTML = modeToggle + items.map(item => `
+                <div class="signal-item">
+                    <div class="signal-item-title">
+                        <a href="${esc(item.url || '#')}" target="_blank" onclick="event.stopPropagation()">${esc(item.title)}</a>
+                    </div>
+                    <div class="signal-item-summary">${esc(item.summary || '')}</div>
+                </div>
+            `).join('');
+        }
+
+        async function switchSignalMode(signalId, mode) {
+            const container = document.getElementById(`signal-items-${signalId}`);
+            container.dataset.mode = mode;
+
+            if (signalItemsCache[`${signalId}-${mode}`]) {
+                renderSignalItems(container, signalItemsCache[`${signalId}-${mode}`], signalId, mode);
+                return;
+            }
+
+            container.innerHTML = '<div class="signal-loading">Loading...</div>';
+            try {
+                const res = await fetch(`${API}/signals/${signalId}/items?mode=${mode}&limit=8`);
+                const data = await res.json();
+                signalItemsCache[`${signalId}-${mode}`] = data.items || [];
+                renderSignalItems(container, data.items || [], signalId, mode);
+            } catch (e) {
+                container.innerHTML = '<div class="signal-loading">Failed to load items</div>';
+            }
         }
 
         // ─── FAQ ────────────────────────────────────────
