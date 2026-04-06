@@ -18,5 +18,21 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build: .
+    container_name: trends-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file: .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - production
+
 volumes:
   pgdata:

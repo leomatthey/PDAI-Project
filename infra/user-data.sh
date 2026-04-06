@@ -29,30 +29,9 @@ LANGCHAIN_PROJECT=${project_name}
 DB_PASSWORD=${db_password}
 ENVEOF
 
-# --- Update docker-compose for production ---
-# Change port mapping from 5433 to 5432 (no conflict on EC2)
-sed -i 's/5433:5432/5432:5432/' docker-compose.yml
-
-# Insert the API service before the volumes: section
-sed -i '/^volumes:/i\
-\  api:\
-\    build: .\
-\    container_name: trends-api\
-\    restart: unless-stopped\
-\    ports:\
-\      - "8000:8000"\
-\    env_file: .env\
-\    environment:\
-\      DB_HOST: postgres\
-\      DB_PORT: "5432"\
-\    depends_on:\
-\      postgres:\
-\        condition: service_healthy\
-' docker-compose.yml
-
-# --- Start everything ---
+# --- Start everything (production profile includes the API container) ---
 chown -R ubuntu:ubuntu /home/ubuntu/app
-docker compose up -d --build
+docker compose --profile production up -d --build
 
 # --- Setup nginx to serve dashboard on port 80 ---
 cat > /etc/nginx/sites-available/dashboard << 'NGINXEOF'
