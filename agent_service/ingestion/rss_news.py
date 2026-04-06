@@ -2,12 +2,9 @@ import re
 from datetime import datetime, timezone
 
 import feedparser
-from dotenv import load_dotenv
 
 from agent_service.ingestion.normalize import normalize_item
 from agent_service.models import IngestedItem
-
-load_dotenv()
 
 RSS_FEEDS: dict[str, str] = {
     # AI news outlets

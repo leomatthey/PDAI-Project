@@ -4,13 +4,10 @@ import time
 from datetime import date
 from pathlib import Path
 
-from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 
 from agent_service.config import settings
 from agent_service.models import FilterResult
-
-load_dotenv()
 
 PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "filter.txt"
 
