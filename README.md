@@ -5,13 +5,14 @@ A multi-agent system that automatically collects AI research papers, news, and s
 **Live demo:** [http://3.255.80.234](http://3.255.80.234)
 
 **Course:** Prototyping Products with AI (PDAI) | ESADE Business School
+
 **Team:** Leo Matthey, Pedro Resende, Ivan Salticov, Miguel Faria | MiBA Second Term, 2025
 
 ---
 
 ## The Problem
 
-The AI landscape moves faster than any individual can track. Hundreds of papers hit arXiv weekly, companies ship new models overnight, and funding rounds reshape competitive dynamics before the news cycle catches up. Existing solutions -- curated newsletters, analyst reports, RSS feeds -- each fail in different ways: too narrow, too slow, too noisy, or too expensive.
+The AI landscape moves faster than any individual can track. Hundreds of papers hit arXiv weekly, companies ship new models overnight, and funding rounds reshape competitive dynamics before the news cycle catches up. Existing solutions – curated newsletters, analyst reports, RSS feeds – each fail in different ways: too narrow, too slow, too noisy, or too expensive.
 
 We built a system that handles ingestion, filtering, and synthesis automatically, delivering quality-reviewed intelligence reports every week.
 
@@ -42,7 +43,7 @@ The system uses three specialized agents orchestrated in a **writer-critic loop*
 | **Synthesis Agent** | Claude Sonnet 4.5 | Writes weekly briefings and monthly reports from scored items and detected signals |
 | **Critic Agent** | Groq Llama 3.3 70B | Adversarial review on 4 dimensions: grounding, coherence, completeness, actionability |
 
-The critic uses a **different model family** (Llama vs Claude) intentionally -- same-model review tends to approve its own blind spots. Reports must score >= 7/10 across all dimensions or get revised with specific feedback. After 2 failed revisions, the report is force-published with a quality warning.
+The critic uses a **different model family** (Llama vs Claude) intentionally – same-model review tends to approve its own blind spots. Reports must score >= 7/10 across all dimensions or get revised with specific feedback. After 2 failed revisions, the report is force-published with a quality warning.
 
 ### Writer-Critic Loop (LangGraph StateGraph)
 
@@ -64,7 +65,7 @@ The loop is implemented as a formal LangGraph `StateGraph` with typed state, not
 
 ## Data Sources
 
-All free, public APIs -- no paid subscriptions required:
+All free, public APIs – no paid subscriptions required:
 
 | Source | Items/run | What it captures |
 |--------|-----------|------------------|
@@ -81,8 +82,8 @@ Items are deduplicated on ingestion via deterministic source IDs (`{source}:{SHA
 
 Every item gets a 384-dimensional embedding (all-MiniLM-L6-v2, local CPU) stored in PostgreSQL via pgvector. This powers:
 
-- **Dashboard search bar** -- type a query, get the most semantically similar items ranked by cosine distance
-- **Signal-item linking** -- click a trend signal to see related items via embedding similarity or explicit evidence IDs
+- **Dashboard search bar** – type a query, get the most semantically similar items ranked by cosine distance
+- **Signal-item linking** – click a trend signal to see related items via embedding similarity or explicit evidence IDs
 
 This is meaning-based, not keyword matching. A search for "computer vision" surfaces items about "image recognition architectures" even if those exact words don't appear.
 
@@ -268,8 +269,8 @@ See [`infra/README.md`](infra/README.md) and [`infra/DEPLOYMENT.md`](infra/DEPLO
 
 Three tables in PostgreSQL with pgvector:
 
-- **`items`** -- All ingested content with embeddings (`vector(384)`), relevance/novelty scores, topic tags, and raw metadata (JSONB). Deduplicated on `source_id` (unique constraint).
-- **`reports`** -- Generated reports with markdown source, rendered HTML, quality scores, critic feedback (JSONB), revision count, and referenced item IDs.
-- **`signals`** -- Detected trend patterns with signal type (emergence/acceleration/disruption), strength score, evidence item IDs, and active/inactive flag.
+- **`items`** – All ingested content with embeddings (`vector(384)`), relevance/novelty scores, topic tags, and raw metadata (JSONB). Deduplicated on `source_id` (unique constraint).
+- **`reports`** – Generated reports with markdown source, rendered HTML, quality scores, critic feedback (JSONB), revision count, and referenced item IDs.
+- **`signals`** – Detected trend patterns with signal type (emergence/acceleration/disruption), strength score, evidence item IDs, and active/inactive flag.
 
 Schema defined in [`init-db.sql`](init-db.sql).
