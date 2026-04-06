@@ -103,7 +103,6 @@ class IngestResponse(BaseModel):
     """Response from the ingestion endpoint."""
     source: str
     items_ingested: int
-    items_filtered: int
 
 
 class ReportResponse(BaseModel):

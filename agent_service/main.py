@@ -97,7 +97,7 @@ def ingest(source: str):
         if result is not None:
             ingested += 1
 
-    return IngestResponse(source=source, items_ingested=ingested, items_filtered=0)
+    return IngestResponse(source=source, items_ingested=ingested)
 
 
 @app.post("/ingest", response_model=list[IngestResponse])
