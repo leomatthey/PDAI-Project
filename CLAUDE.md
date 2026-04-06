@@ -7,8 +7,8 @@
 1. **Weekly Briefing** — Concise synthesis of the most important AI developments
 2. **Monthly Deep Report** — Comprehensive trend analysis with strategic signals
 
-University project for **Prototyping Products with AI (PDAI)** at ESADE Business School.
-Student: **Pedro Resende** | MiBA Second Term | 2-3 week build timeline.
+University group project for **Prototyping Products with AI (PDAI)** at ESADE Business School.
+Team: **Pedro Resende** & **Leo Matthey** | MiBA Second Term.
 
 ---
 
@@ -47,44 +47,35 @@ uv add --dev <package>
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────┐
-│             SCHEDULED TRIGGERS (cron)              │
-│         Daily ingestion + Weekly/Monthly synth     │
-└──────────────┬───────────────────────────────────┘
+User / Dashboard (static HTML)
+       │
+       ▼
+   FastAPI (port 8000)
+       │
+       ├── Ingestion: arXiv, Semantic Scholar, RSS, GitHub
+       │       │
+       │       ▼
+       ├── Filter Agent (Claude Haiku) → scores relevance & novelty
+       │       │
+       │       ▼
+       ├── Signal Detection (Claude Haiku) → trend patterns
+       │       │
+       │       ▼
+       └── Report Pipeline (LangGraph)
                │
-               ▼
-┌──────────────────────────────────────────────────┐
-│          n8n (Workflow Orchestration)              │
-│                                                    │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐           │
-│  │ Ingest  │→ │ Filter  │→ │ Store   │           │
-│  │ Sources │  │ & Score │  │ in DB   │           │
-│  └─────────┘  └─────────┘  └─────────┘           │
-│                                                    │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐           │
-│  │Synthesize│→│ Critic  │→ │ Deliver │           │
-│  │ (LLM)   │  │ (LLM)  │  │ Email/  │           │
-│  │         │← │ Review  │  │ PDF     │           │
-│  └─────────┘  └─────────┘  └─────────┘           │
-└──────────────────────────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────────────────┐
-│  PostgreSQL + pgvector (items, embeddings, reports)│
-└──────────────────────────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────────────────┐
-│     Simple Dashboard (Next.js or plain HTML)       │
-│     Browse items, read reports, download PDFs      │
-└──────────────────────────────────────────────────┘
+               ├── Synthesis Agent (Claude Sonnet) → writes draft
+               ├── Critic Agent (Groq Llama / Gemini Flash) → reviews
+               └── Loop: revise if score < 7 (max 2 retries)
+                       │
+                       ▼
+                   PostgreSQL + pgvector
 ```
 
 ---
 
 ## Tech Stack & Model Routing
 
-### LLM Budget Strategy (~€20-25/month)
+### LLM Budget Strategy (~$13-19/month)
 
 | Role | Model | Cost | Why |
 |------|-------|------|-----|
@@ -93,9 +84,9 @@ uv add --dev <package>
 | Monthly deep report | **Claude Sonnet 4.6 Batch API** | ~$3-4/mo | 50% discount, reports aren't urgent |
 | Critic / quality review | **Groq Llama 3.3 70B** | $0 | Free, different model family = better cross-validation |
 | Embeddings | **all-MiniLM-L6-v2** (local) | $0 | Runs on CPU via sentence-transformers |
-| Backup / experiments | **Gemini 2.0 Flash** (free tier) | $0 | Fallback for exploratory analysis |
+| Backup / experiments | **Gemini 2.0 Flash** (free tier) | $0 | Fallback for critic when Groq is unavailable |
 
-### Infrastructure (All Free)
+### Infrastructure (All Free / Local)
 
 | Component | Choice |
 |-----------|--------|
@@ -103,7 +94,7 @@ uv add --dev <package>
 | Database | PostgreSQL + pgvector (Docker) |
 | Agent framework | LangGraph (with LangChain) |
 | Observability | LangSmith free tier (5,000 traces/month) |
-| Email delivery | Resend free tier (3,000 emails/month) |
+| Dashboard | Static HTML served locally |
 | Deployment | Docker Compose on local machine |
 
 ---
@@ -111,42 +102,46 @@ uv add --dev <package>
 ## Project Structure
 
 ```
-ai-trends-explorer/
-├── docker-compose.yml
-├── .env.example
+PDAI-Project/
+├── docker-compose.yml             # PostgreSQL + n8n (local infra)
+├── Dockerfile                     # Container image for agent service
+├── .env.example                   # Environment template
 ├── .env                           # Never committed — API keys
 ├── pyproject.toml                 # uv project config
 ├── uv.lock                       # Committed for reproducibility
-├── init-db.sql                   # PostgreSQL schema
+├── init-db.sql                   # PostgreSQL schema (3 tables)
+├── langgraph.json                # LangGraph dev server config
 │
-├── agent-service/                # Python backend (FastAPI + LangGraph)
-│   ├── Dockerfile
-│   ├── main.py                   # FastAPI endpoints
+├── agent_service/                # Python backend (FastAPI + LangGraph)
+│   ├── main.py                   # FastAPI endpoints & pipeline orchestration
+│   ├── config.py                 # Settings & env vars
+│   ├── models.py                 # Pydantic schemas
+│   ├── db.py                     # PostgreSQL operations
 │   ├── agents/
+│   │   ├── pipeline.py           # LangGraph writer-critic loop
 │   │   ├── filter.py             # Relevance scoring (Haiku)
 │   │   ├── synthesizer.py        # Report writing (Sonnet)
 │   │   ├── critic.py             # Quality review (Groq Llama)
-│   │   └── signals.py            # Pattern detection
+│   │   └── signals.py            # Trend signal detection
 │   ├── ingestion/
-│   │   ├── arxiv_source.py
-│   │   ├── semantic_scholar.py
-│   │   ├── rss_news.py
-│   │   ├── github_trending.py
-│   │   └── normalize.py          # Common schema
-│   ├── models.py                 # Pydantic schemas
+│   │   ├── arxiv_source.py       # arXiv papers
+│   │   ├── semantic_scholar.py   # Paper metadata & citations
+│   │   ├── rss_news.py           # AI news feeds
+│   │   ├── github_trending.py    # Trending AI repos
+│   │   └── normalize.py          # Common schema + embeddings
 │   └── prompts/
-│       ├── filter.txt
-│       ├── weekly_synthesis.txt
-│       ├── monthly_report.txt
-│       └── critic.txt
+│       ├── filter.txt            # Relevance scoring prompt
+│       ├── weekly_synthesis.txt  # Weekly briefing prompt
+│       ├── monthly_report.txt    # Monthly report prompt
+│       └── critic.txt            # Quality review prompt
 │
 ├── n8n-workflows/                # Exported n8n workflow JSON files
-│   ├── daily-ingest.json
-│   ├── weekly-briefing.json
-│   └── monthly-report.json
+│   ├── daily-ingest.json         # Cron: daily → /pipeline/daily
+│   ├── weekly-briefing.json      # Cron: Friday → /pipeline/weekly
+│   └── monthly-report.json       # Cron: 1st of month → /pipeline/monthly
 │
-└── dashboard/                    # Optional simple frontend
-    └── ...
+└── dashboard/
+    └── index.html                # Static dashboard (HTML + JS)
 ```
 
 ---
@@ -182,20 +177,19 @@ The critic uses a **different model family** (Llama vs Claude) intentionally —
 
 ### Implementation: LangGraph
 
-The writer-critic loop is implemented as a LangGraph `StateGraph` with conditional edges. See the blueprint for the full code pattern.
+The writer-critic loop is implemented as a LangGraph `StateGraph` with conditional edges. The graph flow: `synthesize → critique → (approved → publish) | (retry → synthesize) | (force_publish)`.
 
 ---
 
 ## Data Sources (All Free)
 
-| Source | What | Access | Frequency |
-|--------|------|--------|-----------|
-| arXiv | AI/ML papers | `arxiv` Python package or RSS (cs.AI, cs.LG, cs.CL) | Daily |
-| Semantic Scholar | Paper metadata, citations | REST API (no auth, 1000 req/sec) | Daily |
-| HuggingFace | Trending models, datasets | API + trending page | Daily |
-| AI news RSS | TechCrunch, VentureBeat, etc. | Standard RSS parsing | Every few hours |
-| Company blogs | Google AI, Meta AI, OpenAI, Anthropic | RSS feeds | As published |
-| GitHub Trending | Hot AI repos and tools | GitHub API (5000 req/hr with token) | Daily |
+| Source | What | Access |
+|--------|------|--------|
+| arXiv | AI/ML papers | `arxiv` Python package (cs.AI, cs.LG, cs.CL) |
+| Semantic Scholar | Paper metadata, citations | REST API (no auth) |
+| AI news RSS | TechCrunch, VentureBeat, MIT Tech Review, etc. | Standard RSS parsing (10 feeds) |
+| Company blogs | Google AI, Meta AI, OpenAI, Anthropic | RSS feeds |
+| GitHub Trending | Hot AI repos and tools | GitHub API |
 
 ---
 
@@ -212,11 +206,13 @@ Schema lives in `init-db.sql`.
 
 ## n8n Workflows
 
+Pre-built workflows for automated scheduling (optional — pipelines can also be triggered manually via the dashboard or API):
+
 | Workflow | Trigger | Action |
 |----------|---------|--------|
 | `daily-ingest` | Cron: daily 6am | Pull all sources → normalize → store in Postgres |
-| `weekly-briefing` | Cron: Friday 8am | Fetch week's items → LangGraph pipeline → email |
-| `monthly-report` | Cron: 1st of month 8am | Fetch month's items → deep analysis → PDF/HTML |
+| `weekly-briefing` | Cron: Friday 8am | Fetch week's items → LangGraph pipeline → report |
+| `monthly-report` | Cron: 1st of month 8am | Fetch month's items → deep analysis → report |
 
 n8n calls the LangGraph pipeline via HTTP Request node → FastAPI backend.
 
@@ -228,7 +224,7 @@ n8n calls the LangGraph pipeline via HTTP Request node → FastAPI backend.
 # .env (never committed)
 ANTHROPIC_API_KEY=sk-ant-...
 GROQ_API_KEY=gsk_...
-GOOGLE_AI_API_KEY=...              # Gemini backup
+GOOGLE_AI_API_KEY=...              # Gemini backup (optional)
 DB_PASSWORD=changeme
 
 # LangSmith (optional but recommended)
@@ -236,7 +232,7 @@ LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=...
 LANGCHAIN_PROJECT=ai-trends-explorer
 
-# GitHub (for trending source)
+# GitHub (optional — raises API rate limit)
 GITHUB_TOKEN=ghp_...
 ```
 
@@ -245,19 +241,16 @@ GITHUB_TOKEN=ghp_...
 ## Running the Stack
 
 ```bash
-# Start infrastructure
+# Start infrastructure (PostgreSQL + n8n)
 docker compose up -d
 
-# Access n8n
-open http://localhost:5678
+# Run the agent service (dev mode)
+uv run uvicorn agent_service.main:app --reload --port 8000
 
-# Access agent API
-open http://localhost:8000
+# Open the dashboard
+open dashboard/index.html
 
-# Run agent service locally (dev mode)
-uv run uvicorn agent-service.main:app --reload --port 8000
-
-# Run LangGraph dev server
+# Run LangGraph dev server (optional — for pipeline visualization)
 uv run langgraph dev
 ```
 
@@ -265,33 +258,26 @@ uv run langgraph dev
 
 ## Cost Optimization
 
-1. **Prompt caching** — Claude's 90% savings on repeated system prompts
+1. **Haiku as gatekeeper** — Every item goes through Haiku first; only high-scorers reach Sonnet
 2. **Batch API** — 50% off for non-urgent work (monthly reports, bulk re-scoring)
-3. **Haiku as gatekeeper** — Every item goes through Haiku first; only high-scorers reach Sonnet
+3. **Prompt caching** — Claude's 90% savings on repeated system prompts
 4. **Structured output** — Force JSON responses to keep outputs concise
 5. **Token budgets** — Set `max_tokens` explicitly on every call
+6. **Free critic** — Groq Llama 3.3 70B is free and provides cross-model validation
 
 ---
 
 ## Key Dependencies
 
 ```
-langchain
-langgraph
-langchain-anthropic
-langchain-groq
-langchain-google-genai
+langchain, langgraph, langchain-anthropic, langchain-groq, langchain-google-genai
 langsmith
-fastapi
-uvicorn
-psycopg2-binary
-pgvector
+fastapi, uvicorn
+psycopg2-binary, pgvector
 sentence-transformers
-arxiv
-feedparser
-httpx
-pydantic
-python-dotenv
+arxiv, feedparser, httpx
+pydantic, pydantic-settings, python-dotenv
+markdown
 ```
 
 ---
@@ -301,7 +287,6 @@ python-dotenv
 - Python 3.12+
 - Use `load_dotenv()` at the top of every file
 - Tools return error strings (not raise exceptions) for graceful agent retries
-- MCP operations use `await` / `ainvoke`
 - Always set `checkpointer` when using memory or persistent state
 - Use `thread_id` in config for conversation continuity
 - Type hints everywhere, Pydantic models for data schemas

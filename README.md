@@ -3,12 +3,7 @@
 A multi-agent system that automatically collects AI research papers, news, and signals from public sources, filters out noise, and produces actionable intelligence reports.
 
 **University project** for Prototyping Products with AI (PDAI) at ESADE Business School.
-
-## Architecture
-
-[![AWS Infrastructure](https://storage.googleapis.com/second-petal-295822.appspot.com/elements/autoDiagram%3A08c825e9ab60d83bf3e5b1c277046a6a4a111d79f2e92867cc4909df58502056.png)](https://app.eraser.io/workspace/37qJnP2t9fLeBYLLdhv2)
-
-> [View full diagram on Eraser](https://app.eraser.io/workspace/37qJnP2t9fLeBYLLdhv2)
+**Team:** Pedro Resende & Leo Matthey | MiBA Second Term, 2025.
 
 ## What It Does
 
@@ -17,7 +12,34 @@ A multi-agent system that automatically collects AI research papers, news, and s
 | **Weekly Briefing** | Every Friday | Concise synthesis of the most important AI developments |
 | **Monthly Deep Report** | 1st of each month | Comprehensive trend analysis with strategic signals |
 
-Both delivered via email (Amazon SES) and viewable on a static dashboard (S3 + CloudFront).
+Reports are viewable on the dashboard and exportable as styled HTML or Quarto documents.
+
+## Architecture
+
+```
+User / Dashboard (static HTML)
+       │
+       ▼
+   FastAPI (port 8000)
+       │
+       ├── Ingestion: arXiv, Semantic Scholar, RSS, GitHub
+       │       │
+       │       ▼
+       ├── Filter Agent (Claude Haiku) → scores relevance & novelty
+       │       │
+       │       ▼
+       ├── Signal Detection (Claude Haiku) → trend patterns
+       │       │
+       │       ▼
+       └── Report Pipeline (LangGraph)
+               │
+               ├── Synthesis Agent (Claude Sonnet) → writes draft
+               ├── Critic Agent (Groq Llama / Gemini Flash) → reviews
+               └── Loop: revise if score < 7 (max 2 retries)
+                       │
+                       ▼
+                   PostgreSQL + pgvector
+```
 
 ## Multi-Agent Pipeline
 
@@ -37,8 +59,7 @@ All free APIs:
 
 - **arXiv** -- AI/ML papers (cs.AI, cs.LG, cs.CL)
 - **Semantic Scholar** -- Paper metadata, citations
-- **HuggingFace** -- Trending models and datasets
-- **AI News RSS** -- TechCrunch, VentureBeat, Ars Technica
+- **AI News RSS** -- TechCrunch, VentureBeat, MIT Tech Review, and more (10 feeds)
 - **Company Blogs** -- Google AI, Meta AI, OpenAI, Anthropic
 - **GitHub Trending** -- Hot AI repos and tools
 
@@ -48,11 +69,11 @@ All free APIs:
 |-----------|-----------|
 | Agent Framework | LangGraph + LangChain |
 | Backend API | FastAPI |
-| Workflow Engine | n8n (self-hosted) |
-| Database | PostgreSQL + pgvector |
+| Workflow Engine | n8n (self-hosted, optional) |
+| Database | PostgreSQL + pgvector (Docker) |
 | Embeddings | all-MiniLM-L6-v2 (local, CPU) |
 | Observability | LangSmith |
-| Infrastructure | AWS (ECS Fargate, RDS, S3, CloudFront, SES, EventBridge) |
+| Dashboard | Static HTML + vanilla JS |
 | Package Manager | uv |
 
 ## Quick Start
@@ -61,8 +82,8 @@ All free APIs:
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) installed
-- [Docker](https://www.docker.com/) for local infrastructure
-- API keys: Anthropic, Groq, (optional: Google AI, GitHub)
+- [Docker](https://www.docker.com/) for local infrastructure (OrbStack or Docker Desktop)
+- API keys: Anthropic, Groq (optional: Google AI, GitHub)
 
 ### Setup
 
@@ -71,60 +92,79 @@ All free APIs:
 git clone https://github.com/<your-username>/PDAI-Project.git
 cd PDAI-Project
 
-# Set up centralized venv with direnv
+# Set up centralized venv with direnv (keeps .venv outside OneDrive)
 echo "export UV_PROJECT_ENVIRONMENT=\"\$HOME/.venvs/$(basename $PWD)\"" > .envrc && direnv allow
 
 # Install dependencies
 uv sync
 
-# Copy environment variables
+# Copy environment variables and add your API keys
 cp .env.example .env
-# Edit .env with your API keys
 
 # Start local infrastructure (Postgres + n8n)
 docker compose up -d
 
 # Run the agent service
-uv run uvicorn agent-service.main:app --reload --port 8000
+uv run uvicorn agent_service.main:app --reload --port 8000
+
+# Open the dashboard
+open dashboard/index.html
 ```
 
 ## Project Structure
 
 ```
 PDAI-Project/
-├── docker-compose.yml
-├── .env.example
-├── pyproject.toml
-├── uv.lock
-├── init-db.sql
+├── docker-compose.yml             # PostgreSQL + n8n
+├── Dockerfile                     # Agent service container
+├── .env.example                   # Environment template
+├── pyproject.toml                 # Dependencies
+├── uv.lock                       # Lock file
+├── init-db.sql                   # Database schema
+├── langgraph.json                # LangGraph config
 │
-├── agent-service/
-│   ├── main.py                  # FastAPI endpoints
+├── agent_service/                # Python backend
+│   ├── main.py                   # FastAPI endpoints
+│   ├── config.py                 # Settings
+│   ├── models.py                 # Pydantic schemas
+│   ├── db.py                     # Database operations
 │   ├── agents/
-│   │   ├── filter.py            # Relevance scoring (Haiku)
-│   │   ├── synthesizer.py       # Report writing (Sonnet)
-│   │   ├── critic.py            # Quality review (Groq Llama)
-│   │   └── signals.py           # Pattern detection
+│   │   ├── pipeline.py           # LangGraph writer-critic loop
+│   │   ├── filter.py             # Relevance scoring (Haiku)
+│   │   ├── synthesizer.py        # Report writing (Sonnet)
+│   │   ├── critic.py             # Quality review (Groq Llama)
+│   │   └── signals.py            # Trend detection
 │   ├── ingestion/
 │   │   ├── arxiv_source.py
 │   │   ├── semantic_scholar.py
 │   │   ├── rss_news.py
 │   │   ├── github_trending.py
 │   │   └── normalize.py
-│   ├── models.py
-│   └── prompts/
-│       ├── filter.txt
-│       ├── weekly_synthesis.txt
-│       ├── monthly_report.txt
-│       └── critic.txt
+│   └── prompts/                  # System prompts for each agent
 │
-├── n8n-workflows/
-│   ├── daily-ingest.json
-│   ├── weekly-briefing.json
-│   └── monthly-report.json
+├── n8n-workflows/                # Scheduling workflows (optional)
 │
 └── dashboard/
+    └── index.html                # Static dashboard
 ```
+
+## API Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check with item/report counts |
+| POST | `/ingest/{source}` | Ingest from: `arxiv`, `semantic_scholar`, `rss`, `github` |
+| POST | `/ingest` | Ingest from all sources |
+| POST | `/filter?limit=N` | Score N unscored items with Haiku |
+| POST | `/signals/detect` | Detect trend signals from scored items |
+| GET | `/signals` | List active signals |
+| POST | `/reports/generate?report_type=weekly` | Generate report (writer-critic pipeline) |
+| GET | `/reports?report_type=weekly&limit=10` | List reports |
+| GET | `/reports/{id}/download` | Download report as styled HTML |
+| GET | `/reports/{id}/qmd` | Export report as Quarto document |
+| POST | `/pipeline/daily` | Full daily pipeline (ingest + filter + signals) |
+| POST | `/pipeline/weekly` | Daily + weekly report |
+| POST | `/pipeline/monthly` | Daily + monthly report |
 
 ## Cost Strategy (~$13-19/month)
 

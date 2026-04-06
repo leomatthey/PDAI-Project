@@ -20,11 +20,6 @@ class Settings(BaseSettings):
     # GitHub
     github_token: str = ""
 
-    # Email (Resend)
-    resend_api_key: str = ""
-    resend_from_email: str = "trends@yourdomain.com"
-    resend_to_email: str = ""
-
     # LangSmith
     langchain_tracing_v2: bool = True
     langchain_api_key: str = ""
